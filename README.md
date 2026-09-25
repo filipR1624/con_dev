@@ -1,4 +1,6 @@
-# Lab repo for Concurrent Development 2026-2027
+# Concurrent Development 2026-2027
+
+Repository containing lab exercises from Concurrent Development module
 
 ## Lab 1 (21st Sept.)
 
