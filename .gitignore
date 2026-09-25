@@ -1,1 +1,7 @@
 .DS_Store
+session1
+lab1/atomic/
+lab1/mutex/
+lab1/semaphore1/
+lab1/semaphore2/
+lab1/signal/
