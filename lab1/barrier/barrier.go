@@ -29,35 +29,45 @@ import (
 	"sync"
 )
 
-const totalRoutines = 10
+const totalRoutines = 3
 
-// barrier is an implementation of concurrency where two theads must sync (aka perform a "rendezvous"),
-// before moving on to the "critical section".
-func barrier(goNum int, count *int, wg *sync.WaitGroup, mutex *sync.Mutex, semaphore chan struct{}) bool {
+type semaphore struct {
+	emaphore chan struct{}
+}
+
+func (s *semaphore) initialize(size int) {
+	s.emaphore = make(chan struct{}, size)
+}
+
+// barrier is an implementation of rendezvous for n number of threads.
+// n-1 threads will block until the nth one unblocks them.
+func barrier(i int, count *int, wg *sync.WaitGroup, mutex *sync.Mutex, s *semaphore) {
+	fmt.Println("PartA", i)
 	mutex.Lock()
 	*count++
-	last := *count == totalRoutines
-	mutex.Unlock()
-
-	fmt.Println("rendezvous ", goNum)
-	if last {
-		close(semaphore)
+	if *count == totalRoutines {
+		mutex.Unlock()
+		s.emaphore <- struct{}{}
+		<-s.emaphore
 	} else {
-		<-semaphore
+		mutex.Unlock()
+		<-s.emaphore
+		s.emaphore <- struct{}{}
 	}
-	fmt.Println("critical section ", goNum)
+
+	fmt.Println("PartB", i)
 	wg.Done()
-	return true
 }
 
 func main() {
 	var wg sync.WaitGroup
-	var m sync.Mutex
-	sem := make(chan struct{})
-	count := 0
 	wg.Add(totalRoutines)
-	for i := range totalRoutines { //create the go Routines here
-		go barrier(i, &count, &wg, &m, sem)
+	var m sync.Mutex
+	var s semaphore
+	s.initialize(0)
+	count := 0
+	for i := range totalRoutines {
+		go barrier(i, &count, &wg, &m, &s)
 	}
 	wg.Wait() //wait for everyone to finish before exiting
 }
