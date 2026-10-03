@@ -31,8 +31,9 @@ import (
 
 const totalRoutines = 10
 
-// Place a barrier in this function --use Mutex's and Semaphores
-func doStuff(goNum int, count *int, wg *sync.WaitGroup, mutex *sync.Mutex, semaphore chan struct{}) bool {
+// barrier is an implementation of concurrency where two theads must sync (aka perform a "rendezvous"),
+// before moving on to the "critical section".
+func barrier(goNum int, count *int, wg *sync.WaitGroup, mutex *sync.Mutex, semaphore chan struct{}) bool {
 	mutex.Lock()
 	*count++
 	last := *count == totalRoutines
@@ -55,16 +56,8 @@ func main() {
 	sem := make(chan struct{})
 	count := 0
 	wg.Add(totalRoutines)
-	//ctx := context.TODO()
-	//var theLock sync.Mutex
-	//sem := semaphore.NewWeighted(int64(totalRoutines))
-	//theLock.Lock()
-	//sem.Acquire(ctx, 1)
 	for i := range totalRoutines { //create the go Routines here
-		go doStuff(i, &count, &wg, &m, sem)
+		go barrier(i, &count, &wg, &m, sem)
 	}
-	//sem.Release(1)
-	//theLock.Unlock()
-
 	wg.Wait() //wait for everyone to finish before exiting
 }
