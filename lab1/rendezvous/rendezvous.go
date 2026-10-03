@@ -1,4 +1,4 @@
-//rendezvous.go Template Code
+//rendezvous.go
 //Copyright (C) 2024 Dr. Joseph Kehoe
 
 // This program is free software: you can redistribute it and/or modify
@@ -35,24 +35,24 @@ import (
 const duration = 5
 
 type semaphore struct {
-	n chan struct{}
+	channel chan struct{}
 }
 
 // initialize creates a buffered channel of capacity 1 to mimic a semaphore
-func initialize() semaphore {
+func initialize(size int) semaphore {
 	return semaphore{
-		n: make(chan struct{}, 1),
+		channel: make(chan struct{}, size),
 	}
 }
 
 // signal mimics incrementing a semaphore
 func (s semaphore) signal() {
-	s.n <- struct{}{}
+	s.channel <- struct{}{}
 }
 
 // wait mimics decrementing a semaphore
 func (s semaphore) wait() {
-	<-s.n
+	<-s.channel
 }
 
 // rendezvous requires all threads to finish PartA before moving on to PartB, aka they need to "rendezvous"
@@ -70,8 +70,8 @@ func rendezvous(thread int, wg *sync.WaitGroup, semA, semB *semaphore) {
 
 func main() {
 	wg := sync.WaitGroup{}
-	s1 := initialize()
-	s2 := initialize()
+	s1 := initialize(1)
+	s2 := initialize(1)
 
 	for i := range 2 {
 		wg.Add(1)
