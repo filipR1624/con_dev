@@ -25,35 +25,29 @@
 package main
 
 import (
+	"con_dev/semaphore"
 	"fmt"
 	"sync"
 )
 
 const totalRoutines = 3
 
-type semaphore struct {
-	emaphore chan struct{}
-}
-
-func (s *semaphore) initialize(size int) {
-	s.emaphore = make(chan struct{}, size)
-}
-
 // barrier is an implementation of rendezvous for n number of threads.
 // n-1 threads will block until the nth one unblocks them.
-func barrier(i int, count *int, wg *sync.WaitGroup, mutex *sync.Mutex, s *semaphore) {
+func barrier(i int, count *int, wg *sync.WaitGroup, mutex *sync.Mutex, sem *semaphore.Semaphore) {
 	fmt.Println("PartA", i)
+
 	mutex.Lock()
 	*count++
-	if *count == totalRoutines {
-		mutex.Unlock()
-		s.emaphore <- struct{}{}
-		<-s.emaphore
-	} else {
-		mutex.Unlock()
-		<-s.emaphore
-		s.emaphore <- struct{}{}
+	last := *count == totalRoutines
+	mutex.Unlock()
+
+	if last {
+		sem.Signal()
 	}
+
+	sem.Wait()
+	sem.Signal()
 
 	fmt.Println("PartB", i)
 	wg.Done()
@@ -63,11 +57,10 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(totalRoutines)
 	var m sync.Mutex
-	var s semaphore
-	s.initialize(0)
+	s := semaphore.NewSemaphore(0)
 	count := 0
 	for i := range totalRoutines {
-		go barrier(i, &count, &wg, &m, &s)
+		go barrier(i, &count, &wg, &m, s)
 	}
 	wg.Wait() //wait for everyone to finish before exiting
 }
