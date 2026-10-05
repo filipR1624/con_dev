@@ -17,7 +17,7 @@
 //--------------------------------------------
 // Author: Joseph Kehoe (Joseph.Kehoe@setu.ie)
 // Created on 30/9/2024
-// Modified by: Filip Raguz
+// Modified by: Filip Raguz C00301624
 // Issues: -
 // Help: Thomas Radulescu
 //--------------------------------------------
@@ -30,6 +30,7 @@ import (
 	"sync"
 )
 
+// Global for simplicity. Symbolizes total amount of threads (go Routines).
 const totalRoutines = 3
 
 // barrier is an implementation of rendezvous for n number of threads.
@@ -53,6 +54,8 @@ func barrier(i int, count *int, wg *sync.WaitGroup, mutex *sync.Mutex, sem *sema
 	wg.Done()
 }
 
+// Implementation of barrier.
+// WaitGroups are used to allow threads to finish their work, otherwise the program will return abruptly.
 func main() {
 	var wg sync.WaitGroup
 	wg.Add(totalRoutines)
