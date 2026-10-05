@@ -16,7 +16,7 @@ func NewSemaphore(size int) *Semaphore {
 	}
 }
 
-func (s Semaphore) Wait() {
+func (s *Semaphore) Wait() {
 	s.mutex.Lock()
 
 	s.value--
@@ -29,7 +29,7 @@ func (s Semaphore) Wait() {
 	<-s.waiters
 }
 
-func (s Semaphore) Signal() {
+func (s *Semaphore) Signal() {
 	s.mutex.Lock()
 
 	if s.value < 0 {
