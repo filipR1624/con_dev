@@ -33,7 +33,10 @@ import (
 const threadCount = 3
 
 func reusableBarrier(i int, wg *sync.WaitGroup, m *sync.Mutex, count *int, s1, s2 *semaphore.Semaphore) {
-	for r := range 2 {
+	reuses := 2
+	// ran in a loop to simulate the reusability
+	// reuses controls HOW MANY reuses occur
+	for r := range reuses {
 		fmt.Println("rendezvous", i, "round", r+1)
 		m.Lock()
 		*count++
@@ -42,10 +45,16 @@ func reusableBarrier(i int, wg *sync.WaitGroup, m *sync.Mutex, count *int, s1, s
 
 		if last {
 			s2.Wait()
+			// s2 was initialized to 1,
+			// so on the first pass we are LOCKING IT here
+			// (aka making sure when others reach it they block)
 			s1.Signal()
 		}
 		s1.Wait()
 		s1.Signal()
+		// after all threads pass this point
+		// s1 is left at 1 (aka s1 is left unlocked),
+		// while s2 is at 0
 
 		fmt.Println("critical section", i, "round", r+1)
 
@@ -58,6 +67,10 @@ func reusableBarrier(i int, wg *sync.WaitGroup, m *sync.Mutex, count *int, s1, s
 			s1.Wait()
 			s2.Signal()
 		}
+		// threads block here (since s2 was locked on the initial pass),
+		// but after all pass, its left at 1 again,
+		// thats why we need to lock s1 in theLast block
+		// (aka put it back to 0)
 		s2.Wait()
 		s2.Signal()
 
@@ -74,7 +87,8 @@ func main() {
 	wg.Add(threadCount)
 	// shared lock
 	mutex := sync.Mutex{}
-	// barrier1
+
+	// synchronization mechanisms
 	sem1 := semaphore.NewSemaphore(0)
 	sem2 := semaphore.NewSemaphore(1)
 	count := 0
